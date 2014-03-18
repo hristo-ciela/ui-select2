@@ -100,8 +100,16 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
                 if (angular.isString(viewValue)) {
                   viewValue = viewValue.split(',');
                 }
-                elm.select2(
-                  'data', convertToSelect2Model(viewValue));
+
+                if (viewValue && angular.isObject(viewValue[0])) {
+                  elm.select2(
+                    'data', convertToSelect2Model(viewValue));
+                } else if (!viewValue || !viewValue[0]) {
+                  elm.select2('data', []);
+                } else {
+                  elm.select2(
+                    'val', convertToSelect2Model(viewValue));
+                }
               } else {
                 if (angular.isObject(controller.$viewValue)) {
                   elm.select2('data', controller.$viewValue);
