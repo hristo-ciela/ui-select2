@@ -14,15 +14,17 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
     require: 'ngModel',
     priority: 1,
     compile: function (tElm, tAttrs) {
+      var jqtElm = jq3(tElm);
+
       var watch,
         repeatOption,
         repeatAttr,
-        isSelect = tElm.is('select'),
+        isSelect = jqtElm.is('select'),
         isMultiple = angular.isDefined(tAttrs.multiple);
 
       // Enable watching of the options dataset if in use
-      if (tElm.is('select')) {
-        repeatOption = tElm.find( 'optgroup[ng-repeat], optgroup[data-ng-repeat], option[ng-repeat], option[data-ng-repeat]');
+      if (jqtElm.is('select')) {
+        repeatOption = jqtElm.find( 'optgroup[ng-repeat], optgroup[data-ng-repeat], option[ng-repeat], option[data-ng-repeat]');
 
         if (repeatOption.length) {
           repeatAttr = repeatOption.attr('ng-repeat') || repeatOption.attr('data-ng-repeat');
@@ -31,6 +33,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
       }
 
       return function (scope, elm, attrs, controller) {
+        var jqElm = jq3(elm);
         // instance-specific options
         var opts = angular.extend({}, options, scope.$eval(attrs.uiSelect2));
 
@@ -93,7 +96,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
           }, true);
           controller.$render = function () {
             if (isSelect) {
-              elm.select2('val', controller.$viewValue);
+              jqElm.select2('val', controller.$viewValue);
             } else {
               if (opts.multiple) {
                 controller.$isEmpty = function (value) {
@@ -105,34 +108,34 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
                 }
 
                 if (viewValue && angular.isObject(viewValue[0])) {
-                  elm.select2(
+                  jqElm.select2(
                     'data', convertToSelect2Model(viewValue));
                 } else if (!viewValue || !viewValue[0]) {
-                  elm.select2('data', []);
+                  jqElm.select2('data', []);
                 } else {
-                  elm.select2(
+                  jqElm.select2(
                     'val', convertToSelect2Model(viewValue));
                 }
 
                 if (opts.sortable) {
-                  elm.select2("container").find("ul.select2-choices").sortable({
+                  jqElm.select2("container").find("ul.select2-choices").sortable({
                     containment: 'parent',
                     start: function () {
-                      elm.select2("onSortStart");
+                      jqElm.select2("onSortStart");
                     },
                     update: function () {
-                      elm.select2("onSortEnd");
-                      elm.trigger('change');
+                      jqElm.select2("onSortEnd");
+                      jqElm.trigger('change');
                     }
                   });
                 }                  
               } else {
                 if (angular.isObject(controller.$viewValue)) {
-                  elm.select2('data', controller.$viewValue);
+                  jqElm.select2('data', controller.$viewValue);
                 } else if (!controller.$viewValue) {
-                  elm.select2('data', null);
+                  jqElm.select2('data', null);
                 } else {
-                  elm.select2('val', controller.$viewValue);
+                  jqElm.select2('val', controller.$viewValue);
                 }
               }
             }
@@ -146,7 +149,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
               }
               // Delayed so that the options have time to be rendered
               $timeout(function () {
-                elm.select2('val', controller.$viewValue);
+                jqElm.select2('val', controller.$viewValue);
                 // Refresh angular to remove the superfluous option
                 controller.$render();
                 if(newVal && !oldVal && controller.$setPristine) {
@@ -158,7 +161,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
 
           // Update valid and dirty statuses
           controller.$parsers.push(function (value) {
-            var div = elm.prev();
+            var div = jqElm.prev();
             div
               .toggleClass('ng-invalid', !controller.$valid)
               .toggleClass('ng-valid', controller.$valid)
@@ -171,7 +174,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
 
           if (!isSelect) {
             // Set the view and model value and update the angular template manually for the ajax/multiple select2.
-            elm.bind("change", function (e) {
+            jqElm.bind("change", function (e) {
               e.stopImmediatePropagation();
               
               if (scope.$$phase || scope.$root.$$phase) {
@@ -179,7 +182,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
               }
               scope.$apply(function () {
                 controller.$setViewValue(
-                  convertToAngularModel(elm.select2('data')));
+                  convertToAngularModel(jqElm.select2('data')));
               });
             });
 
@@ -193,7 +196,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
                   if (isPristine) {
                     controller.$setPristine();
                   }
-                  elm.prev().toggleClass('ng-pristine', controller.$pristine);
+                  jqElm.prev().toggleClass('ng-pristine', controller.$pristine);
                 });
               };
             }
@@ -201,30 +204,30 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
         }
 
         elm.bind("$destroy", function() {
-          elm.select2("destroy");
+          jqElm.select2("destroy");
         });
 
         attrs.$observe('disabled', function (value) {
-          elm.select2('enable', !value);
+          jqElm.select2('enable', !value);
         });
 
         attrs.$observe('readonly', function (value) {
-          elm.select2('readonly', !!value);
+          jqElm.select2('readonly', !!value);
         });
 
         if (attrs.ngMultiple) {
           scope.$watch(attrs.ngMultiple, function(newVal) {
             attrs.$set('multiple', !!newVal);
-            elm.select2(opts);
+            jqElm.select2(opts);
           });
         }
 
         // Initialize the plugin late so that the injected DOM does not disrupt the template compiler
         $timeout(function () {
-          elm.select2(opts);
+          jqElm.select2(opts);
 
           // Set initial value - I'm not sure about this but it seems to need to be there
-          elm.select2('data', controller.$modelValue);
+          jqElm.select2('data', controller.$modelValue);
           // important!
           controller.$render();
 
@@ -233,12 +236,12 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
               var isPristine = controller.$pristine;
               controller.$pristine = false;
               controller.$setViewValue(
-                  convertToAngularModel(elm.select2('data'))
+                  convertToAngularModel(jqElm.select2('data'))
               );
               if (isPristine) {
                   controller.$setPristine();
               }
-            elm.prev().toggleClass('ng-pristine', controller.$pristine);
+            jqElm.prev().toggleClass('ng-pristine', controller.$pristine);
           }
         });
       };
